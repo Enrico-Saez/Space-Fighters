@@ -1,13 +1,13 @@
 using System.Collections;
 using UnityEngine;
 
-public class MovementTutorial : MonoBehaviour
+public class ShootingTutorial : MonoBehaviour
 {
     [SerializeField] private TutorialController tutorialController;
 
     void Update()
     {
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D))
+        if (Input.GetMouseButton(0))
         {
             tutorialController.TutorialIsDone();
         }
