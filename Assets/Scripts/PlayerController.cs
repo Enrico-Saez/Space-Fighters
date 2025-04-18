@@ -6,7 +6,8 @@ public class PlayerController : MonoBehaviour
     public enum PlayerState { Vulnerable, Invulnerable }
 	private Camera cam;
 	[SerializeField] private Material playerMaterial;
-	[SerializeField] private Transform playerVisual; // reference to the visual child (like the mesh or sprite)
+	[SerializeField] private Transform playerVisual;
+    [SerializeField] private AudioSource shootingSFX;
 
 	private Vector3 normalScale = new Vector3(0.7f, 0.7f, 0.7f);
 	private Vector3 squishScale = new Vector3(0.8f, 0.5f, 0.7f);
@@ -170,12 +171,14 @@ public class PlayerController : MonoBehaviour
             // Ativa o projétil
             projectile.SetActive(true);
 
+            shootingSFX.Play();
+
             // (Opcional) Configura o projétil se ele precisar de algo (velocidade, dano, etc.)
             // Exemplo: projectile.GetComponent<ProjectileController>().Setup(...);
         }
         else
         {
-             Debug.LogWarning("Pool de projéteis esgotada!"); // Avisa se a pool acabou
+             Debug.LogWarning("Pool de projéteis esgotada!");
         }
     }
 
