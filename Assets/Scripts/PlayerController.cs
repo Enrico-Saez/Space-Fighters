@@ -4,6 +4,14 @@ using System.Collections.Generic; // Necessário para Queue
 public class PlayerController : MonoBehaviour
 {
     public enum PlayerState { Vulnerable, Invulnerable }
+	private Camera cam;
+	[SerializeField] private Material playerMaterial;
+	[SerializeField] private Transform playerVisual; // reference to the visual child (like the mesh or sprite)
+
+	private Vector3 normalScale = new Vector3(0.7f, 0.7f, 0.7f);
+	private Vector3 squishScale = new Vector3(0.8f, 0.5f, 0.7f);
+	private Color normalColor;
+	private Color transparentColor;
 
     [Header("Movement")]
     public float moveSpeed = 15f;
@@ -36,7 +44,9 @@ public class PlayerController : MonoBehaviour
 
     void Awake() // Usamos Awake para garantir que a pool seja criada antes de Start
     {
+		cam = Camera.main;
         rb = GetComponent<Rigidbody>();
+		rb.useGravity = false;
         rb.drag = 0f; // drag padrão já era 0, mas bom garantir
 
         InitializeProjectilePool();
@@ -52,6 +62,12 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         HandleMovement();
+		// Clamp player inside camera view
+		Vector3 pos = transform.position;
+		Vector3 viewportPos = cam.WorldToViewportPoint(pos);
+		viewportPos.x = Mathf.Clamp(viewportPos.x, 0f, 1f);
+		viewportPos.y = Mathf.Clamp(viewportPos.y, 0f, 1f);
+		transform.position = cam.ViewportToWorldPoint(viewportPos);
     }
 
     void HandleInput()
@@ -84,7 +100,8 @@ public class PlayerController : MonoBehaviour
              // Se soltou o espaço antes do tempo máximo, entra em cooldown
              currentState = PlayerState.Vulnerable;
              cooldownTimer = cooldownTime;
-             currentInvulnTime = 0f; // Reseta o tempo acumulado
+             currentInvulnTime = 0f;
+			ResetVisuals(); // Reseta o tempo acumulado
         }
 
         if (isInvulnPressed && cooldownTimer <= 0f)
@@ -93,6 +110,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentState = PlayerState.Invulnerable;
                 currentInvulnTime += Time.deltaTime;
+				ApplyInvulnerableVisuals();
             }
             else
             {
@@ -223,6 +241,20 @@ public class PlayerController : MonoBehaviour
         projectile.transform.SetParent(poolContainer); // Garante que volte para o container
         projectilePool.Enqueue(projectile);
     }
+
+	// Call this when entering invulnerable state
+	void ApplyInvulnerableVisuals()
+	{
+    	playerVisual.localScale = squishScale;
+    	playerMaterial.color = transparentColor;
+	}
+
+	// Call this when returning to normal
+	void ResetVisuals()
+	{
+    	playerVisual.localScale = normalScale;
+    	playerMaterial.color = normalColor;
+	}
 
 
     // --- Métodos Públicos ---
