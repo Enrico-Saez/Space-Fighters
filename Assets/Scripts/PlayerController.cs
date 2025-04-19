@@ -1,5 +1,6 @@
 using UnityEngine;
-using System.Collections.Generic; // Necessário para Queue
+using System.Collections.Generic;
+using UnityEngine.SceneManagement; // Necessário para Queue
 
 public class PlayerController : MonoBehaviour
 {
@@ -69,6 +70,15 @@ public class PlayerController : MonoBehaviour
 		viewportPos.x = Mathf.Clamp(viewportPos.x, 0f, 1f);
 		viewportPos.y = Mathf.Clamp(viewportPos.y, 0f, 1f);
 		transform.position = cam.ViewportToWorldPoint(viewportPos);
+    }
+    
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Enemy") || other.CompareTag("EnemyProjectile") && PlayerState.Vulnerable == currentState)
+        {
+            Destroy(gameObject);
+            SceneManager.LoadScene("Scenes/MainMenu");
+        }
     }
 
     void HandleInput()

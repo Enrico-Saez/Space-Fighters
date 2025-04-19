@@ -36,17 +36,10 @@ public class ProjectileController : MonoBehaviour
     // Colisão (Opcional, exemplo)
     void OnTriggerEnter(Collider other)
     {
-        // Adicione aqui a lógica de colisão (ex: causar dano a um inimigo)
-        // if (other.CompareTag("Enemy")) {
-        //     other.GetComponent<EnemyHealth>().TakeDamage(10);
-        // }
-
-        // Retorna à pool após colidir
-        ReturnToPool();
-    }
-    void OnCollisionEnter(Collision collision) // Se usar Rigidbodies e colisões não-trigger
-    {
-        // Lógica similar ao OnTriggerEnter
+        if (other.CompareTag("EnemyProjectile"))
+        {
+            Destroy(other.gameObject);
+        }
         ReturnToPool();
     }
 
