@@ -5,15 +5,15 @@ using UnityEngine.SceneManagement; // Necessário para Queue
 public class PlayerController : MonoBehaviour
 {
     public enum PlayerState { Vulnerable, Invulnerable }
-	private Camera cam;
-	[SerializeField] private Material playerMaterial;
-	[SerializeField] private Transform playerVisual;
+    private Camera cam;
+    [SerializeField] private Material playerMaterial;
+    [SerializeField] private Transform playerVisual;
     [SerializeField] private AudioSource shootingSFX;
 
-	private Vector3 normalScale = new Vector3(0.7f, 0.7f, 0.7f);
-	private Vector3 squishScale = new Vector3(0.8f, 0.5f, 0.7f);
-	private Color normalColor;
-	private Color transparentColor;
+    private Vector3 normalScale = new Vector3(0.7f, 0.7f, 0.7f);
+    private Vector3 squishScale = new Vector3(0.8f, 0.5f, 0.7f);
+    private Color normalColor;
+    private Color transparentColor;
 
     [Header("Movement")]
     public float moveSpeed = 15f;
@@ -46,9 +46,9 @@ public class PlayerController : MonoBehaviour
 
     void Awake() // Usamos Awake para garantir que a pool seja criada antes de Start
     {
-		cam = Camera.main;
+        cam = Camera.main;
         rb = GetComponent<Rigidbody>();
-		rb.useGravity = false;
+        rb.useGravity = false;
         rb.drag = 0f; // drag padrão já era 0, mas bom garantir
 
         InitializeProjectilePool();
@@ -64,17 +64,17 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         HandleMovement();
-		// Clamp player inside camera view
-		Vector3 pos = transform.position;
-		Vector3 viewportPos = cam.WorldToViewportPoint(pos);
-		viewportPos.x = Mathf.Clamp(viewportPos.x, 0f, 1f);
-		viewportPos.y = Mathf.Clamp(viewportPos.y, 0f, 1f);
-		transform.position = cam.ViewportToWorldPoint(viewportPos);
+        // Clamp player inside camera view
+        Vector3 pos = transform.position;
+        Vector3 viewportPos = cam.WorldToViewportPoint(pos);
+        viewportPos.x = Mathf.Clamp(viewportPos.x, 0f, 1f);
+        viewportPos.y = Mathf.Clamp(viewportPos.y, 0f, 1f);
+        transform.position = cam.ViewportToWorldPoint(viewportPos);
     }
-    
+
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy") || other.CompareTag("EnemyProjectile") && PlayerState.Vulnerable == currentState)
+        if ((other.CompareTag("Enemy") || other.CompareTag("EnemyProjectile")) && PlayerState.Vulnerable == currentState)
         {
             Destroy(gameObject);
             SceneManager.LoadScene("Scenes/MainMenu");
@@ -108,11 +108,11 @@ public class PlayerController : MonoBehaviour
         // Reset do tempo de invulnerabilidade se não estiver pressionando espaço
         if (!isInvulnPressed && currentState == PlayerState.Invulnerable)
         {
-             // Se soltou o espaço antes do tempo máximo, entra em cooldown
-             currentState = PlayerState.Vulnerable;
-             cooldownTimer = cooldownTime;
-             currentInvulnTime = 0f;
-			ResetVisuals(); // Reseta o tempo acumulado
+            // Se soltou o espaço antes do tempo máximo, entra em cooldown
+            currentState = PlayerState.Vulnerable;
+            cooldownTimer = cooldownTime;
+            currentInvulnTime = 0f;
+            ResetVisuals(); // Reseta o tempo acumulado
         }
 
         if (isInvulnPressed && cooldownTimer <= 0f)
@@ -121,7 +121,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentState = PlayerState.Invulnerable;
                 currentInvulnTime += Time.deltaTime;
-				ApplyInvulnerableVisuals();
+                ApplyInvulnerableVisuals();
             }
             else
             {
@@ -133,7 +133,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (!isInvulnPressed) // Se não está pressionando e não estava invulnerável antes
         {
-             // Garante que está vulnerável e reseta o tempo de invulnerabilidade
+            // Garante que está vulnerável e reseta o tempo de invulnerabilidade
             currentState = PlayerState.Vulnerable;
             currentInvulnTime = 0f;
         }
@@ -142,7 +142,7 @@ public class PlayerController : MonoBehaviour
         if (cooldownTimer > 0f)
         {
             cooldownTimer -= Time.deltaTime;
-             if (cooldownTimer < 0f) cooldownTimer = 0f; // Garante que não fique negativo
+            if (cooldownTimer < 0f) cooldownTimer = 0f; // Garante que não fique negativo
         }
     }
 
@@ -188,7 +188,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-             Debug.LogWarning("Pool de projéteis esgotada!");
+            Debug.LogWarning("Pool de projéteis esgotada!");
         }
     }
 
@@ -204,8 +204,8 @@ public class PlayerController : MonoBehaviour
 
         if (projectilePrefab == null)
         {
-             Debug.LogError("Prefab do projétil não atribuído no PlayerController!");
-             return; // Evita erro NullReferenceException
+            Debug.LogError("Prefab do projétil não atribuído no PlayerController!");
+            return; // Evita erro NullReferenceException
         }
 
 
@@ -213,14 +213,16 @@ public class PlayerController : MonoBehaviour
         {
             GameObject projectile = Instantiate(projectilePrefab, poolContainer);
             projectile.SetActive(false); // Começa desativado
-            // Guarda referência para a pool no projétil para ele poder retornar sozinho
-             var projController = projectile.GetComponent<ProjectileController>(); // Assumindo que você terá um script no projétil
-             if (projController != null)
-             {
-                  projController.SetPool(this); // Passa a referência desta instância do PlayerController
-             } else {
-                 Debug.LogWarning($"Projétil {projectilePrefab.name} não tem o script ProjectileController. A devolução manual será necessária ou ele nunca voltará para a pool.");
-             }
+                                         // Guarda referência para a pool no projétil para ele poder retornar sozinho
+            var projController = projectile.GetComponent<ProjectileController>(); // Assumindo que você terá um script no projétil
+            if (projController != null)
+            {
+                projController.SetPool(this); // Passa a referência desta instância do PlayerController
+            }
+            else
+            {
+                Debug.LogWarning($"Projétil {projectilePrefab.name} não tem o script ProjectileController. A devolução manual será necessária ou ele nunca voltará para a pool.");
+            }
             projectilePool.Enqueue(projectile);
         }
     }
@@ -235,12 +237,12 @@ public class PlayerController : MonoBehaviour
         else
         {
             // Opcional: Expandir a pool se ela acabar
-             Debug.LogWarning("Pool de projéteis vazia. Expandindo...");
-             GameObject projectile = Instantiate(projectilePrefab, poolContainer);
-              var projController = projectile.GetComponent<ProjectileController>();
-             if (projController != null) projController.SetPool(this);
-             // Não enfileirar imediatamente, pois ele será usado agora
-             return projectile; // Retorna o projétil recém-criado
+            Debug.LogWarning("Pool de projéteis vazia. Expandindo...");
+            GameObject projectile = Instantiate(projectilePrefab, poolContainer);
+            var projController = projectile.GetComponent<ProjectileController>();
+            if (projController != null) projController.SetPool(this);
+            // Não enfileirar imediatamente, pois ele será usado agora
+            return projectile; // Retorna o projétil recém-criado
 
             // Ou retornar null se não quiser expansão dinâmica
             // return null;
@@ -255,19 +257,19 @@ public class PlayerController : MonoBehaviour
         projectilePool.Enqueue(projectile);
     }
 
-	// Call this when entering invulnerable state
-	void ApplyInvulnerableVisuals()
-	{
-    	playerVisual.localScale = squishScale;
-    	playerMaterial.color = transparentColor;
-	}
+    // Call this when entering invulnerable state
+    void ApplyInvulnerableVisuals()
+    {
+        playerVisual.localScale = squishScale;
+        playerMaterial.color = transparentColor;
+    }
 
-	// Call this when returning to normal
-	void ResetVisuals()
-	{
-    	playerVisual.localScale = normalScale;
-    	playerMaterial.color = normalColor;
-	}
+    // Call this when returning to normal
+    void ResetVisuals()
+    {
+        playerVisual.localScale = normalScale;
+        playerMaterial.color = normalColor;
+    }
 
 
     // --- Métodos Públicos ---
@@ -279,12 +281,12 @@ public class PlayerController : MonoBehaviour
 
     public float GetCooldownPercent()
     {
-         if (cooldownTime <= 0) return 0f; // Evita divisão por zero
+        if (cooldownTime <= 0) return 0f; // Evita divisão por zero
         return Mathf.Clamp01(cooldownTimer / cooldownTime);
     }
 
-     public PlayerState GetCurrentState() // Método útil para debug ou UI
-     {
-          return currentState;
-     }
+    public PlayerState GetCurrentState() // Método útil para debug ou UI
+    {
+        return currentState;
+    }
 }
