@@ -4,6 +4,7 @@ public class ProjectileController : MonoBehaviour
 {
     public float speed = 20f;
     public float lifetime = 3f; // Tempo em segundos antes de retornar à pool
+    public bool forward = false;
 
     private float lifetimeTimer;
     private PlayerController ownerPool; // Referência para a pool do jogador
@@ -22,8 +23,15 @@ public class ProjectileController : MonoBehaviour
 
     void Update()
     {
-        // Move o projétil para cima
-        transform.Translate(Vector3.up * speed * Time.deltaTime);
+        // Move o projétil para cima ou para frente
+        if (forward)
+        {
+            transform.Translate(transform.forward * speed * Time.deltaTime);
+        }
+        else
+        {
+            transform.Translate(Vector3.up * speed * Time.deltaTime);
+        }
 
         // Decrementa o tempo de vida
         lifetimeTimer -= Time.deltaTime;

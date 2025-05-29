@@ -20,8 +20,8 @@ public class PlayerController : MonoBehaviour
     public float acceleration = 30f;
     public float deceleration = 15f;
 
-    private Vector2 moveInput;
-    private Vector2 currentVelocity;
+    private Vector3 moveInput;
+    private Vector3 currentVelocity;
     private Rigidbody rb;
 
     [Header("Invulnerability")]
@@ -38,7 +38,7 @@ public class PlayerController : MonoBehaviour
     public GameObject projectilePrefab; // O prefab do projétil
     public Transform firePoint;       // Ponto de onde os projéteis saem
     public float fireRate = 5f;       // Projéteis por segundo
-    public int initialPoolSize = 20;  // Quantos projéteis criar inicialmente
+    public int initialPoolSize = 40;  // Quantos projéteis criar inicialmente
 
     private float fireTimer; // Controla a cadência de tiro
     private Queue<GameObject> projectilePool; // A pool de projéteis
@@ -64,12 +64,6 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         HandleMovement();
-        // Clamp player inside camera view
-        Vector3 pos = transform.position;
-        Vector3 viewportPos = cam.WorldToViewportPoint(pos);
-        viewportPos.x = Mathf.Clamp(viewportPos.x, 0f, 1f);
-        viewportPos.y = Mathf.Clamp(viewportPos.y, 0f, 1f);
-        transform.position = cam.ViewportToWorldPoint(viewportPos);
     }
 
     void OnTriggerEnter(Collider other)
@@ -83,21 +77,51 @@ public class PlayerController : MonoBehaviour
 
     void HandleInput()
     {
-        moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical")).normalized;
-        isInvulnPressed = Input.GetKey(KeyCode.Space);
-        // Input de tiro será verificado em HandleShooting
+        float inputX = Input.GetAxisRaw("Horizontal");
+        float inputY = 0f;
+        if (Input.GetKey(KeyCode.Space)) inputY = 1f;
+        if (Input.GetKey(KeyCode.LeftShift)) inputY = -1f;
+        float inputZ = Input.GetAxisRaw("Vertical");
+
+        Vector3 input = new Vector3(inputX, inputY, inputZ).normalized;
+
+        // Movimento relativo à câmera
+        Vector3 camForward = cam.transform.forward;
+        Vector3 camRight = cam.transform.right;
+        Vector3 camUp = cam.transform.up;
+
+        moveInput = (camRight * input.x) + (camUp * input.y) + (camForward * input.z);
+        moveInput = moveInput.normalized;
+
+        isInvulnPressed = Input.GetKey(KeyCode.Mouse1);
     }
 
     void HandleMovement()
     {
-        // Lógica de movimento permanece a mesma
-        if (moveInput != Vector2.zero)
+        if (moveInput != Vector3.zero)
         {
-            currentVelocity = Vector2.MoveTowards(currentVelocity, moveInput * moveSpeed, acceleration * Time.fixedDeltaTime);
+            currentVelocity = Vector3.MoveTowards(
+                currentVelocity,
+                moveInput * moveSpeed,
+                acceleration * Time.fixedDeltaTime
+            );
+
+            // Usa a currentVelocity para suavizar a rotação também
+            Vector3 lookDirection = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+
+            if (lookDirection != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(lookDirection, Vector3.up);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 3f * Time.fixedDeltaTime);
+            }
         }
         else
         {
-            currentVelocity = Vector2.MoveTowards(currentVelocity, Vector2.zero, deceleration * Time.fixedDeltaTime);
+            currentVelocity = Vector3.MoveTowards(
+                currentVelocity,
+                Vector3.zero,
+                deceleration * Time.fixedDeltaTime
+            );
         }
 
         rb.velocity = currentVelocity;
@@ -176,7 +200,7 @@ public class PlayerController : MonoBehaviour
             // Define a posição e rotação
             projectile.transform.position = firePoint.position;
             // Rotação para cima (pode ajustar se firePoint tiver rotação)
-            projectile.transform.rotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
+            projectile.transform.rotation = firePoint.rotation;
 
             // Ativa o projétil
             projectile.SetActive(true);

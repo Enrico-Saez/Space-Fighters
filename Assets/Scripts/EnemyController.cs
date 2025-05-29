@@ -3,7 +3,7 @@ using UnityEngine;
 public class EnemyController : MonoBehaviour
 {
     
-    public float moveSpeed = 5f;
+    public float moveSpeed = 10f;
     private Transform player;
     
     void Start()
