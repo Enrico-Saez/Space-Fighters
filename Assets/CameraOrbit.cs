@@ -13,6 +13,11 @@ public class CameraOrbit : MonoBehaviour
 
     void Update()
     {
+        if (player == null)
+        {
+            Debug.LogError("Player transform not assigned in CameraOrbit script.");
+            return;
+        }
         // Input do mouse
         float mouseX = Input.GetAxis("Mouse X");
         float mouseY = Input.GetAxis("Mouse Y");

@@ -14,10 +14,6 @@ public class BossHealthBar : MonoBehaviour
 
     void Update()
     {
-        BossHealthBarImage.fillAmount = boss.GetCurrentHealth() / 300;
-        if (boss.GetCurrentHealth() == 0)
-        {
-            Destroy(boss.gameObject);
-        }
+        BossHealthBarImage.fillAmount = (float)boss.GetCurrentHealth() / 300;
     }
 }

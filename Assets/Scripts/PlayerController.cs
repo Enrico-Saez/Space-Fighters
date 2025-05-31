@@ -54,6 +54,12 @@ public class PlayerController : MonoBehaviour
         InitializeProjectilePool();
     }
 
+    void Start()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     void Update()
     {
         HandleInput();
@@ -68,8 +74,12 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if ((other.CompareTag("Enemy") || other.CompareTag("EnemyProjectile")) && PlayerState.Vulnerable == currentState)
+        if ((other.CompareTag("Enemy") || other.CompareTag("EnemyProjectile")) && currentState == PlayerState.Vulnerable)
         {
+            // Destrava o cursor antes de mudar de cena
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
             Destroy(gameObject);
             SceneManager.LoadScene("Scenes/MainMenu");
         }
@@ -193,26 +203,42 @@ public class PlayerController : MonoBehaviour
 
     void Shoot()
     {
-        // Pega um projétil da pool
         GameObject projectile = GetProjectileFromPool();
         if (projectile != null)
         {
-            // Define a posição e rotação
+            // Ray do centro da tela
+            Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+            Vector3 shootDirection;
+
+            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+            {
+                // Se acertar algo, atira para esse ponto
+                shootDirection = (hit.point - firePoint.position).normalized;
+            }
+            else
+            {
+                // Se não acertar nada, atira para frente da câmera
+                shootDirection = cam.transform.forward;
+            }
+
+            // Define posição do projétil na boca da arma
             projectile.transform.position = firePoint.position;
-            // Rotação para cima (pode ajustar se firePoint tiver rotação)
-            projectile.transform.rotation = firePoint.rotation;
+
+            // Rota o projétil para a direção calculada
+            projectile.transform.rotation = Quaternion.LookRotation(shootDirection);
 
             // Ativa o projétil
             projectile.SetActive(true);
 
-            shootingSFX.Play();
-
-            // (Opcional) Configura o projétil se ele precisar de algo (velocidade, dano, etc.)
-            // Exemplo: projectile.GetComponent<ProjectileController>().Setup(...);
+            // Som
+            if (shootingSFX != null)
+            {
+                shootingSFX.Play();
+            }
         }
         else
         {
-            Debug.LogWarning("Pool de projéteis esgotada!");
+            Debug.LogWarning("Não foi possível obter um projétil da pool.");
         }
     }
 

@@ -3,37 +3,44 @@ using UnityEngine;
 public class ProjectileController : MonoBehaviour
 {
     public float speed = 20f;
-    public float lifetime = 3f; // Tempo em segundos antes de retornar à pool
+    public float lifetime = 3f;
     public bool forward = false;
 
     private float lifetimeTimer;
-    private PlayerController ownerPool; // Referência para a pool do jogador
+    private PlayerController ownerPool;
 
-    // Método para o PlayerController definir a qual pool este projétil pertence
+    // Referência ao Collider do player para ignorar colisão
+    private Collider playerCollider;
+
     public void SetPool(PlayerController pool)
     {
         ownerPool = pool;
     }
 
-    // Chamado quando o objeto é ativado (SetActive(true))
     void OnEnable()
     {
-        lifetimeTimer = lifetime; // Reseta o tempo de vida
+        lifetimeTimer = lifetime;
+
+        // Ignora colisão com o jogador
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            playerCollider = player.GetComponent<Collider>();
+            Collider projectileCollider = GetComponent<Collider>();
+
+            if (playerCollider != null && projectileCollider != null)
+            {
+                Physics.IgnoreCollision(projectileCollider, playerCollider, true);
+            }
+        }
     }
 
     void Update()
     {
-        // Move o projétil para cima ou para frente
-        if (forward)
-        {
-            transform.Translate(transform.forward * speed * Time.deltaTime);
-        }
-        else
-        {
-            transform.Translate(Vector3.up * speed * Time.deltaTime);
-        }
+        // Movimento baseado na rotação do projétil
+        Vector3 direction = forward ? transform.forward : Vector3.up;
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
 
-        // Decrementa o tempo de vida
         lifetimeTimer -= Time.deltaTime;
         if (lifetimeTimer <= 0f)
         {
@@ -41,28 +48,28 @@ public class ProjectileController : MonoBehaviour
         }
     }
 
-    // Colisão (Opcional, exemplo)
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("EnemyProjectile"))
-        {
-            Destroy(other.gameObject);
-        }
+        // Ignora colisão com o jogador ou outros projéteis
+        if (other.CompareTag("Player") || other.CompareTag("Projectile"))
+            return;
+
+        // Dano ao inimigo ou boss é tratado no outro objeto
         ReturnToPool();
     }
 
-
     void ReturnToPool()
     {
-        // Verifica se tem uma referência válida da pool antes de tentar retornar
         if (ownerPool != null)
         {
-            ownerPool.ReturnProjectileToPool(this.gameObject);
+            gameObject.SetActive(false);
+            transform.SetParent(ownerPool.transform); // opcional, para organização
+            ownerPool.ReturnProjectileToPool(gameObject);
         }
         else
         {
             Debug.LogError("Projétil não sabe a qual pool retornar! Destruindo para evitar problemas.");
-            Destroy(gameObject); // Destruir como fallback se a referência da pool foi perdida
+            Destroy(gameObject);
         }
     }
 }
